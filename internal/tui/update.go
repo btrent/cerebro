@@ -164,7 +164,24 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "pgup", "pgdown":
 		var cmd tea.Cmd
 		m.viewport, cmd = m.viewport.Update(msg)
+		m.follow = m.viewport.AtBottom() // stop following once scrolled up
 		return m, cmd
+	case "home":
+		m.viewport.GotoTop()
+		m.follow = false
+		return m, nil
+	case "end":
+		m.viewport.GotoBottom()
+		m.follow = true
+		return m, nil
+	case "ctrl+up":
+		m.viewport.ScrollUp(1)
+		m.follow = m.viewport.AtBottom()
+		return m, nil
+	case "ctrl+down":
+		m.viewport.ScrollDown(1)
+		m.follow = m.viewport.AtBottom()
+		return m, nil
 	}
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
@@ -191,6 +208,8 @@ func (m Model) submit() (tea.Model, tea.Cmd) {
 	if trimmed == "" {
 		return m, nil // empty submission ignored
 	}
+	// Any submission means the user wants to see fresh output: re-pin to bottom.
+	m.follow = true
 	if eq(trimmed, "exit") || eq(trimmed, "quit") {
 		m.quitting = true
 		return m, tea.Quit

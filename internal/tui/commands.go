@@ -24,7 +24,8 @@ const helpText = `Commands:
 
 Keys:
   Enter send  •  Ctrl+J newline  •  Esc stop generating
-  PgUp/PgDn scroll  •  Ctrl+L clear  •  Ctrl+H toggle help
+  PgUp/PgDn scroll  •  Ctrl+↑/Ctrl+↓ line up/down  •  Home/End top/bottom
+  Ctrl+L clear  •  Ctrl+H toggle help
   Paste >10 lines collapses to a placeholder (full text is still sent).
   Type an image path (.png .jpg .jpeg .webp .gif) to attach it.`
 
@@ -179,10 +180,17 @@ func (m Model) runHeaderCommand(args []string) (Model, tea.Cmd) {
 
 	case "use":
 		if len(rest) == 0 {
-			m.addError("Usage: /header use <name>")
+			m.addError("Usage: /header use <name> (or /header none to disable)")
 			return m, nil
 		}
 		name := strings.Join(rest, " ")
+		// Treat "/header use none" as a convenient alias for disabling.
+		if strings.EqualFold(name, "none") {
+			m.deps.Prompts.None()
+			_ = m.deps.Prompts.Save()
+			m.addSystem("Header prompt disabled (Header: none).")
+			return m, nil
+		}
 		if err := m.deps.Prompts.Use(name); err != nil {
 			m.addError("Cannot use: " + err.Error())
 			return m, nil

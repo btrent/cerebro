@@ -88,6 +88,7 @@ type Model struct {
 	editName  string
 	editIsNew bool
 
+	follow       bool // keep the transcript pinned to the bottom as new output arrives
 	showFullHelp bool
 	quitting     bool
 }
@@ -130,6 +131,7 @@ func New(deps Deps) Model {
 		pasteBuf:      paste.New(),
 		backendStatus: "Starting backend…",
 		mode:          modeChat,
+		follow:        true,
 	}
 	m.addSystem("Welcome to cerebro. Type /help for commands.")
 	return m

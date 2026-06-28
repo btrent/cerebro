@@ -66,7 +66,11 @@ func (m *Model) refreshViewport() {
 		return
 	}
 	m.viewport.SetContent(m.renderTranscript())
-	m.viewport.GotoBottom()
+	// Only pin to the bottom when following; otherwise preserve the user's
+	// scroll position so they can read earlier history while output streams in.
+	if m.follow {
+		m.viewport.GotoBottom()
+	}
 }
 
 func (m *Model) renderTranscript() string {

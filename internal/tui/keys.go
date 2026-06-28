@@ -13,6 +13,11 @@ type keyMap struct {
 	Help    key.Binding
 	ScrollU key.Binding
 	ScrollD key.Binding
+	LineU   key.Binding
+	LineD   key.Binding
+	Top     key.Binding
+	Bottom  key.Binding
+	Scroll  key.Binding // display-only combined hint for the footer
 }
 
 func defaultKeyMap() keyMap {
@@ -25,19 +30,25 @@ func defaultKeyMap() keyMap {
 		Help:    key.NewBinding(key.WithKeys("ctrl+h"), key.WithHelp("ctrl+h", "help")),
 		ScrollU: key.NewBinding(key.WithKeys("pgup"), key.WithHelp("pgup", "scroll up")),
 		ScrollD: key.NewBinding(key.WithKeys("pgdown"), key.WithHelp("pgdn", "scroll down")),
+		LineU:   key.NewBinding(key.WithKeys("ctrl+up"), key.WithHelp("ctrl+↑", "line up")),
+		LineD:   key.NewBinding(key.WithKeys("ctrl+down"), key.WithHelp("ctrl+↓", "line down")),
+		Top:     key.NewBinding(key.WithKeys("home"), key.WithHelp("home", "top")),
+		Bottom:  key.NewBinding(key.WithKeys("end"), key.WithHelp("end", "bottom")),
+		Scroll:  key.NewBinding(key.WithKeys("pgup", "pgdown", "home", "end"), key.WithHelp("pgup/pgdn", "scroll")),
 	}
 }
 
 // ShortHelp implements help.KeyMap for the compact footer.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Submit, k.Newline, k.Cancel, k.Clear, k.Quit}
+	return []key.Binding{k.Submit, k.Newline, k.Scroll, k.Clear, k.Quit}
 }
 
 // FullHelp implements help.KeyMap for the expanded help view.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Submit, k.Newline, k.Cancel},
-		{k.ScrollU, k.ScrollD, k.Clear},
+		{k.ScrollU, k.ScrollD, k.LineU, k.LineD},
+		{k.Top, k.Bottom, k.Clear},
 		{k.Help, k.Quit},
 	}
 }
