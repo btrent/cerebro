@@ -24,10 +24,11 @@ const helpText = `Commands:
 
 Keys:
   Enter send  •  Ctrl+J newline  •  Esc stop generating
-  PgUp/PgDn scroll  •  Ctrl+↑/Ctrl+↓ line up/down  •  Home/End top/bottom
+  PgUp/PgDn scroll  •  Opt+↑/Opt+↓ line up/down  •  Home/End top/bottom
   Ctrl+L clear  •  Ctrl+H toggle help
   Paste >10 lines collapses to a placeholder (full text is still sent).
-  Type an image path (.png .jpg .jpeg .webp .gif) to attach it.`
+  Type an image path (.png .jpg .jpeg .webp .gif) to attach it.
+  Ctrl+V pastes an image from the clipboard (macOS).`
 
 // runCommand parses and executes a slash command. It returns the updated model
 // and any command to run (e.g. tea.Quit).

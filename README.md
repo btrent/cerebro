@@ -107,6 +107,10 @@ Type or paste an image **file path** (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) 
 It appears as an attachment chip and is sent to the model when the active model/provider supports
 images. If the backend is text-only, cerebro warns and sends text only.
 
+On **macOS** you can also paste an image directly from the clipboard with **Ctrl+V** (e.g. a
+screenshot): cerebro saves it to a temp file and attaches it. Note that **Cmd+V** is handled by
+the terminal, not the app, and won't paste image data — use **Ctrl+V**.
+
 ## Configuration
 
 Files (XDG locations on macOS and Linux):
@@ -203,8 +207,10 @@ The TUI and live model inference are validated by running the app.
   architecture. If your installed `mlx-vlm` doesn't yet, image requests return a clear error and
   text chat still works through the same server.
 - **Paste collapsing** depends on terminal *bracketed paste*. Without it, pasted newlines are
-  indistinguishable from rapid typing and won't collapse. Clipboard *image* paste is not
-  supported; use image file paths.
+  indistinguishable from rapid typing and won't collapse.
+- **Clipboard image paste** (Ctrl+V) is macOS-only (uses `osascript`); on other platforms,
+  attach images by typing/pasting a file path. Cmd+V is intercepted by the terminal and won't
+  paste image data.
 - The managed backend is for the default model. Switching to a model on a **different**
   `base_url` connects there but does not start that server for you (set `auto_launch: false`
   and start it yourself, or point `launch_command` at it).

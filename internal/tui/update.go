@@ -2,11 +2,15 @@ package tui
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"cerebro/internal/images"
 	"cerebro/internal/llm"
+	"cerebro/internal/paths"
 	"cerebro/internal/prompts"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -19,6 +23,25 @@ import (
 type backendReadyMsg struct{ err error }
 
 type streamChunkMsg struct{ chunk llm.Chunk }
+
+type clipboardImageMsg struct {
+	path string
+	err  error
+}
+
+// pasteImageCmd saves any image on the system clipboard to a temp file so it can
+// be attached through the normal image pipeline.
+func pasteImageCmd() tea.Cmd {
+	return func() tea.Msg {
+		dir := filepath.Join(paths.DataDir(), "clips")
+		if err := paths.EnsureDir(dir); err != nil {
+			return clipboardImageMsg{err: err}
+		}
+		dest := filepath.Join(dir, fmt.Sprintf("clip-%d.png", time.Now().UnixNano()))
+		path, err := images.PasteClipboardImage(dest)
+		return clipboardImageMsg{path: path, err: err}
+	}
+}
 
 // ensureBackendCmd brings the backend up (launching it if configured). It blocks
 // in its own goroutine so the UI stays responsive while the model loads.
@@ -79,6 +102,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case streamChunkMsg:
 		return m.handleChunk(msg.chunk)
 
+	case clipboardImageMsg:
+		if msg.err != nil {
+			m.addError("Paste image: " + msg.err.Error())
+			m.refreshViewport()
+			return m, nil
+		}
+		// Insert the saved file path so the normal attachment pipeline (chip +
+		// base64 on send) picks it up.
+		m.input.InsertString(" " + msg.path + " ")
+		if !m.deps.Provider.SupportsImages() {
+			m.addSystem("Image attached, but the active model is text-only — it will be ignored on send.")
+		}
+		m.refreshViewport()
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -121,6 +159,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.refreshViewport()
 		}
 		return m, nil
+
+	case "ctrl+v":
+		return m, pasteImageCmd()
 
 	case "ctrl+l":
 		return m.clearConversation(), nil
@@ -174,11 +215,11 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.viewport.GotoBottom()
 		m.follow = true
 		return m, nil
-	case "ctrl+up":
+	case "alt+up", "ctrl+up":
 		m.viewport.ScrollUp(1)
 		m.follow = m.viewport.AtBottom()
 		return m, nil
-	case "ctrl+down":
+	case "alt+down", "ctrl+down":
 		m.viewport.ScrollDown(1)
 		m.follow = m.viewport.AtBottom()
 		return m, nil

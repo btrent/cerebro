@@ -10,6 +10,7 @@ type keyMap struct {
 	Cancel  key.Binding
 	Quit    key.Binding
 	Clear   key.Binding
+	Paste   key.Binding
 	Help    key.Binding
 	ScrollU key.Binding
 	ScrollD key.Binding
@@ -27,11 +28,12 @@ func defaultKeyMap() keyMap {
 		Cancel:  key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "stop")),
 		Quit:    key.NewBinding(key.WithKeys("ctrl+c", "ctrl+d"), key.WithHelp("ctrl+c", "quit")),
 		Clear:   key.NewBinding(key.WithKeys("ctrl+l"), key.WithHelp("ctrl+l", "clear")),
+		Paste:   key.NewBinding(key.WithKeys("ctrl+v"), key.WithHelp("ctrl+v", "paste image")),
 		Help:    key.NewBinding(key.WithKeys("ctrl+h"), key.WithHelp("ctrl+h", "help")),
 		ScrollU: key.NewBinding(key.WithKeys("pgup"), key.WithHelp("pgup", "scroll up")),
 		ScrollD: key.NewBinding(key.WithKeys("pgdown"), key.WithHelp("pgdn", "scroll down")),
-		LineU:   key.NewBinding(key.WithKeys("ctrl+up"), key.WithHelp("ctrl+↑", "line up")),
-		LineD:   key.NewBinding(key.WithKeys("ctrl+down"), key.WithHelp("ctrl+↓", "line down")),
+		LineU:   key.NewBinding(key.WithKeys("alt+up", "ctrl+up"), key.WithHelp("opt+↑", "line up")),
+		LineD:   key.NewBinding(key.WithKeys("alt+down", "ctrl+down"), key.WithHelp("opt+↓", "line down")),
 		Top:     key.NewBinding(key.WithKeys("home"), key.WithHelp("home", "top")),
 		Bottom:  key.NewBinding(key.WithKeys("end"), key.WithHelp("end", "bottom")),
 		Scroll:  key.NewBinding(key.WithKeys("pgup", "pgdown", "home", "end"), key.WithHelp("pgup/pgdn", "scroll")),
@@ -49,6 +51,6 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Submit, k.Newline, k.Cancel},
 		{k.ScrollU, k.ScrollD, k.LineU, k.LineD},
 		{k.Top, k.Bottom, k.Clear},
-		{k.Help, k.Quit},
+		{k.Paste, k.Help, k.Quit},
 	}
 }

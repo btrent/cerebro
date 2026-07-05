@@ -21,32 +21,46 @@ func (m *Model) applyLayout() {
 		return
 	}
 
-	headerH := 1
-	footerH := 2
-	if m.showFullHelp {
-		footerH = 4
-	}
-	chipsH := 0
-	if len(m.currentAttachments()) > 0 {
-		chipsH = 1
-	}
-
 	m.input.SetWidth(m.width - 4)
 	m.input.SetHeight(3)
-	inputH := 3 + 2 + chipsH // textarea + border + chips line
-
-	vpH := m.height - headerH - footerH - inputH
-	if vpH < 1 {
-		vpH = 1
-	}
-	m.viewport.Width = m.width
-	m.viewport.Height = vpH
-
 	m.help.Width = m.width
+
+	// Bounded editor height (it scrolls internally for longer prompts), leaving
+	// room to still see some of the conversation behind it.
+	edH := m.height - 12
+	if edH < 3 {
+		edH = 3
+	} else if edH > 16 {
+		edH = 16
+	}
 	m.editor.SetWidth(m.width - 4)
-	m.editor.SetHeight(m.height - headerH - footerH - 4)
+	m.editor.SetHeight(edH)
 
 	m.rebuildRenderer()
+
+	m.viewport.Width = m.width
+	m.viewport.Height = m.bodyHeight()
+}
+
+// lowerView is the block shown beneath the transcript: the prompt input, or the
+// header editor when editing.
+func (m *Model) lowerView() string {
+	if m.mode == modeHeaderEdit {
+		return m.renderEditor()
+	}
+	return m.renderInput()
+}
+
+// bodyHeight is the height available to the transcript viewport: the terminal
+// height minus the actual rendered heights of the header, lower block, and
+// footer. Measuring real output keeps the total at exactly the terminal height
+// regardless of wrapping in any chrome element.
+func (m *Model) bodyHeight() int {
+	h := m.height - lipgloss.Height(m.renderHeader()) - lipgloss.Height(m.lowerView()) - lipgloss.Height(m.renderFooter())
+	if h < 1 {
+		h = 1
+	}
+	return h
 }
 
 func (m *Model) contentWidth() int {
@@ -136,17 +150,23 @@ func (m Model) View() string {
 	}
 
 	header := m.renderHeader()
+	lower := m.lowerView()
+	footer := m.renderFooter()
+
+	// Size the viewport to exactly the space left by the actual chrome so the
+	// total is always the terminal height (no overflow into the input area).
+	vpH := m.height - lipgloss.Height(header) - lipgloss.Height(lower) - lipgloss.Height(footer)
+	if vpH < 1 {
+		vpH = 1
+	}
+	m.viewport.Width = m.width
+	m.viewport.Height = vpH
+	if m.follow {
+		m.viewport.GotoBottom()
+	}
 	body := m.viewport.View()
 
-	var inputBlock string
-	if m.mode == modeHeaderEdit {
-		inputBlock = m.renderEditor()
-	} else {
-		inputBlock = m.renderInput()
-	}
-
-	footer := m.renderFooter()
-	return strings.Join([]string{header, body, inputBlock, footer}, "\n")
+	return strings.Join([]string{header, body, lower, footer}, "\n")
 }
 
 func (m *Model) renderHeader() string {
@@ -161,7 +181,9 @@ func (m *Model) renderHeader() string {
 		modelName, m.deps.Prompts.ActiveName(), m.statusText())
 
 	line := name + m.st.headerMeta.Render(meta)
-	return m.st.headerBar.Width(m.width).Render(truncate(line, m.width))
+	// Account for the bar's horizontal padding (2) and clamp to a single line so
+	// a long status string can never wrap the header.
+	return m.st.headerBar.Width(m.width).MaxHeight(1).Render(truncate(line, m.width-2))
 }
 
 func (m *Model) statusText() string {
